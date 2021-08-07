@@ -36,6 +36,6 @@ func usageRoot() {
 	for k := range commands {
 		ks = append(ks, k)
 	}
-	fmt.Printf("Usage: %v [command]\navaliable commands: %s\n",
+	fmt.Printf("Usage: %v [command]\navailable commands: %s\n",
 		filepath.Base(os.Args[0]), strings.Join(ks, " "))
 }
