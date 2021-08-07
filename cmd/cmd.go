@@ -16,7 +16,12 @@ type flagSetRef struct {
 var commands = map[string]struct {
 	entry func(*ssl.Env) int
 	set   *flagSetRef
-}{}
+}{
+	"help": {
+		entry: CommandHelp,
+		set:   &commandHelpArgs.flagSetRef,
+	},
+}
 
 func usageRoot() {
 	var ks = make([]string, 0, len(commands))
