@@ -32,6 +32,8 @@ func CommandCreate(env *ssl.Env) int {
 		return 2
 	}
 
+	loadProjectConfig(*args.projectRoot)
+
 	var (
 		join        = filepath.Join
 		proj        = *args.projectRoot
@@ -53,13 +55,13 @@ func CommandCreate(env *ssl.Env) int {
 	env.MakeDir(siteCerts)
 	env.GenerateRSAKey(sitePriLoc)
 	env.WriteSignSSLConf(siteConfLoc, &ssl.SignSSLTemplateArgs{
-		C:            C,
-		O:            O,
-		ST:           ST,
-		L:            L,
+		C:            projectConfig.C,
+		O:            projectConfig.O,
+		ST:           projectConfig.ST,
+		L:            projectConfig.L,
 		OU:           fmt.Sprintf(`"%s"`, unit),
 		CN:           fmt.Sprintf(`"%s"`, site),
-		EmailAddress: EmailAddress,
+		EmailAddress: projectConfig.EmailAddress,
 	})
 	env.GenerateCSR(siteConfLoc, sitePriLoc, siteCSRLoc)
 	env.CreateSignedCrt(siteConfLoc, siteCSRLoc, siteCrtLoc, caCrtLoc, caPriLoc)
@@ -74,7 +76,7 @@ func init() {
 	fs := flag.NewFlagSet("init", flag.ExitOnError)
 	args := &commandCreateArgs
 	args.flagSet = fs
-	args.projectRoot = fs.String("project", "", "path to project")
+	args.projectRoot = fs.String("project", ".", "path to project")
 	args.site = fs.String("site", "", "the site that requiring the new certificate")
 	args.unit = fs.String("unit", "", "the unit that requiring the new certificate")
 }
