@@ -27,7 +27,7 @@ local-ssl init -project=${ca}
 ## Step3: make certificate for your sites
 
 ```bash
-local-ssl create -project=data -site=k8s.master01.io -unit=K8sMaster
+local-ssl create -project=${ca} -site=k8s.master01.io -unit=K8sMaster
 ```
 
 ## Command usage
