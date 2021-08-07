@@ -21,6 +21,10 @@ var commands = map[string]struct {
 		entry: CommandHelp,
 		set:   &commandHelpArgs.flagSetRef,
 	},
+	"init": {
+		entry: CommandInit,
+		set:   &commandInitArgs.flagSetRef,
+	},
 }
 
 func usageRoot() {
