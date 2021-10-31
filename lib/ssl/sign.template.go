@@ -14,6 +14,7 @@ type SignSSLTemplateArgs struct {
 	L            string
 	OU           string
 	CN           string
+	IP           string
 	EmailAddress string
 }
 
@@ -52,7 +53,7 @@ cert_opt = ca_default        # Certificate field options
 [policy_to_match]
 countryName            = match
 stateOrProvinceName    = match
-organizationName       = match
+organizationName       = optional
 organizationalUnitName = optional
 commonName             = supplied
 emailAddress           = optional
@@ -86,6 +87,7 @@ emailAddress = {{.EmailAddress}}
 
 [alt_names]
 DNS.1        = {{.CN}}
+{{.IP}}
 `
 
 	signSSLTemplate = template.New("sign-ssl")

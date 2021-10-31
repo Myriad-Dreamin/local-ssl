@@ -3,21 +3,25 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/Myriad-Dreamin/local-ssl/lib/ssl"
 	"path/filepath"
+
+	"github.com/Myriad-Dreamin/local-ssl/lib/ssl"
 )
 
 var commandCreateArgs struct {
 	flagSetRef
 	projectRoot *string
 	site        *string
+	org         *string
 	unit        *string
+	ip          *string
 }
 
 func CommandCreate(env *ssl.Env) int {
 	if env.HasErr() {
 		return 1
 	}
+
 	args := &commandCreateArgs
 	if len(*args.projectRoot) == 0 {
 		args.flagSet.Usage()
@@ -48,7 +52,17 @@ func CommandCreate(env *ssl.Env) int {
 		siteConfLoc = join(siteCerts, "site.conf")
 		siteCSRLoc  = join(siteCerts, "site.csr")
 		siteCrtLoc  = join(siteCerts, "site.crt")
+		sanIP       = *args.ip
+		orgName     = *args.org
 	)
+
+	if len(sanIP) != 0 {
+		sanIP = fmt.Sprintf("IP.1 = %s", sanIP)
+	}
+
+	if len(orgName) == 0 {
+		orgName = projectConfig.O
+	}
 
 	env.PushWd(proj)
 	env.MakeDir(certs)
@@ -56,11 +70,12 @@ func CommandCreate(env *ssl.Env) int {
 	env.GenerateRSAKey(sitePriLoc)
 	env.WriteSignSSLConf(siteConfLoc, &ssl.SignSSLTemplateArgs{
 		C:            projectConfig.C,
-		O:            projectConfig.O,
+		O:            orgName,
 		ST:           projectConfig.ST,
 		L:            projectConfig.L,
 		OU:           fmt.Sprintf(`"%s"`, unit),
 		CN:           fmt.Sprintf(`"%s"`, site),
+		IP:           sanIP,
 		EmailAddress: projectConfig.EmailAddress,
 	})
 	env.GenerateCSR(siteConfLoc, sitePriLoc, siteCSRLoc)
@@ -78,5 +93,7 @@ func init() {
 	args.flagSet = fs
 	args.projectRoot = fs.String("project", ".", "path to project")
 	args.site = fs.String("site", "", "the site that requiring the new certificate")
+	args.org = fs.String("org", "", "the unit that requiring the new certificate")
 	args.unit = fs.String("unit", "", "the unit that requiring the new certificate")
+	args.ip = fs.String("ip", "", "the ip that requiring the new certificate")
 }

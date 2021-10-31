@@ -52,7 +52,7 @@ cert_opt = ca_default        # Certificate field options
 [policy_to_match]
 countryName            = match
 stateOrProvinceName    = match
-organizationName       = match
+organizationName       = optional
 organizationalUnitName = optional
 commonName             = supplied
 emailAddress           = optional
