@@ -2,24 +2,47 @@ package ssl
 
 import (
 	"io"
+	"strings"
 	"text/template"
 )
 
 var signSSLTemplate *template.Template
 
 type SignSSLTemplateArgs struct {
-	C            string
-	O            string
-	ST           string
-	L            string
-	OU           string
-	CN           string
-	IP           string
-	EmailAddress string
+	C                 string
+	O                 string
+	ST                string
+	L                 string
+	OU                string
+	CN                string
+	IP                string
+	BasicConstraints  string
+	IsCA              string
+	EmailAddress      string
+	KeyUsage          string
+	RestrictPolicyOfO string
 }
 
 func RenderSignSSLConf(w io.Writer, data *SignSSLTemplateArgs) error {
-	return signSSLTemplate.Execute(w, data)
+	tmplArgs := *data
+	if len(tmplArgs.KeyUsage) == 0 {
+		tmplArgs.KeyUsage = "critical,keyCertSign,cRLSign"
+	}
+	if len(tmplArgs.RestrictPolicyOfO) == 0 {
+		tmplArgs.RestrictPolicyOfO = "optional"
+	}
+	if tmplArgs.IsCA == "TRUE" || tmplArgs.IsCA == "true" {
+		tmplArgs.IsCA = "true"
+		tmplArgs.BasicConstraints = "critical," + tmplArgs.BasicConstraints
+	} else {
+		tmplArgs.IsCA = "false"
+	}
+
+	if len(tmplArgs.BasicConstraints) != 0 && !strings.HasSuffix(tmplArgs.BasicConstraints, ",") {
+		tmplArgs.BasicConstraints = tmplArgs.BasicConstraints + ","
+	}
+
+	return signSSLTemplate.Execute(w, &tmplArgs)
 }
 
 func init() {
@@ -53,7 +76,7 @@ cert_opt = ca_default        # Certificate field options
 [policy_to_match]
 countryName            = match
 stateOrProvinceName    = match
-organizationName       = optional
+organizationName       = {{.RestrictPolicyOfO}}
 organizationalUnitName = optional
 commonName             = supplied
 emailAddress           = optional
@@ -69,11 +92,9 @@ prompt                 = no
 req_extensions         = v3_req
 
 [v3_req]
-basicConstraints = CA:FALSE
-keyUsage = critical,keyCertSign,cRLSign
+basicConstraints = {{.BasicConstraints}}CA:{{.IsCA}}
+keyUsage = {{.KeyUsage}}
 subjectKeyIdentifier = hash
-# authorityKeyIdentifier = keyid,issuer
-keyUsage = nonRepudiation, digitalSignature, keyEncipherment
 subjectAltName = @alt_names
 
 [req_distinguished_name]

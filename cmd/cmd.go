@@ -29,6 +29,10 @@ var commands = map[string]struct {
 		entry: CommandCreate,
 		set:   &commandCreateArgs.flagSetRef,
 	},
+	"batch": {
+		entry: CommandBatchCreate,
+		set:   &commandBatchArgs.flagSetRef,
+	},
 }
 
 func usageRoot() {
