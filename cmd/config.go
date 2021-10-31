@@ -19,14 +19,14 @@ var projectConfig struct {
 func loadProjectConfig(path string) {
 	var pcd = filepath.Join(path, "ssl.config.json")
 	if _, err := os.Stat(pcd); err != nil {
-		panic(err)
+		panicHelper(err)
 	}
 	b, err := os.ReadFile(pcd)
 	if err != nil {
-		panic(err)
+		panicHelper(err)
 	}
 	err = json.Unmarshal(b, &projectConfig)
 	if err != nil {
-		panic(err)
+		panicHelper(err)
 	}
 }
