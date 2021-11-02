@@ -4,15 +4,19 @@ import (
 	"flag"
 	"fmt"
 	"github.com/Myriad-Dreamin/local-ssl/lib/ssl"
-	"gopkg.in/yaml.v2"
 	"io"
 	"os"
+	"sort"
 )
 
 var commandBatchArgs struct {
 	flagSetRef
 	projectRoot *string
 	batchConfig *string
+}
+
+type RSAConfig struct {
+	Bits uint64 `yaml:"bits"`
 }
 
 type CertConfBase struct {
@@ -45,46 +49,49 @@ type CertConfBase struct {
 	CaConfig  *struct{}  `yaml:"caConfig"`
 	Type      string     `yaml:"type"`
 	RSAConfig *RSAConfig `yaml:"rsa"`
-	Role      string     `yaml:"role"`
 	O         string     `yaml:"o"`
 	CN        string     `yaml:"cn"`
 	Sans      []string   `yaml:"sans"`
 }
 
 type CertRole struct {
-	CertConf CertConfBase `yaml:"cert,inline"`
+	CertConf CertConfBase `yaml:"roleConf,inline"`
 }
 
 type CertConf struct {
-	CertConf CertConfBase `yaml:"cert,inline"`
+	CertConf CertConfBase `yaml:"inlineConf,inline"`
+	Role     string       `yaml:"role"`
 	Name     string       `yaml:"name"`
 }
 
-type RSAConfig struct {
-	Bits uint64 `yaml:"bits"`
-}
-
 type BatchCertsConfig struct {
-	ApiVersion string              `yaml:"apiVersion"`
-	Scope      string              `yaml:"scope"`
-	Roles      map[string]CertRole `yaml:"roles"`
-	Certs      map[string]CertConf `yaml:"certs"`
-}
-
-func getBatchConfig(reader io.Reader) *BatchCertsConfig {
-	var decoder = yaml.NewDecoder(reader)
-	decoder.SetStrict(true)
-	var conf BatchCertsConfig
-	if err := decoder.Decode(&conf); err != nil {
-		panicHelper(err)
-	}
-	return &conf
+	ApiVersion string                       `yaml:"apiVersion"`
+	Scope      string                       `yaml:"scope"`
+	Assets     map[string][]string          `yaml:"assets"`
+	Mappings   map[string]map[string]string `yaml:"mappings"`
+	Roles      map[string]CertRole          `yaml:"roles"`
+	Certs      map[string][]CertConf        `yaml:"certs"`
 }
 
 func CommandBatchCreateFromReader(env *ssl.Env, r io.Reader) int {
 	var conf = getBatchConfig(r)
 
-	fmt.Println(conf)
+	if len(conf.Certs) == 0 {
+		return 1
+	}
+
+	var collected, errors = evaluateBatchConfig(conf)
+
+	sort.Sort(MergedCertConfCmpImpl(collected))
+	printEvaluatedConf(conf, collected, false)
+
+	if len(errors) != 0 {
+		for _, err := range errors {
+			fmt.Printf("error: %e\n", err)
+		}
+		return 2
+	}
+
 	return 0
 }
 

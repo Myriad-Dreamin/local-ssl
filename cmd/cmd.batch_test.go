@@ -15,8 +15,18 @@ func TestCommandBatchCreateFromReader(t *testing.T) {
 
 	for _, c := range []string{
 		`
-apiVersion: v1
+apiVersion: certificate.local-ssl.io/v1
 scope: skyline-cluster
+assets:
+  hosts:
+  - node2.skyline.io
+  - node3.skyline.io
+  - node4.skyline.io
+mappings:
+  ip:
+    node2.skyline.io: 192.168.1.5
+    node3.skyline.io: 192.168.1.6
+    node4.skyline.io: 192.168.1.7
 roles:
   ca:
     caConfig:
@@ -24,9 +34,17 @@ roles:
   server:
     keyUsage: [critical, extend:critical, serverAuth, nonRepudiation, digitalSignature, keyEncipherment, keyAgreement]
   client:
-    keyUsage: [critical, extend:critical, clientAuth, nonRepudiation, digitalSignature, keyEncipherment]
+    keyUsage: [critical, clientAuth, nonRepudiation, digitalSignature, keyEncipherment]
   mTLSClient:
-    keyUsage: [critical, extend:critical, clientAuth, nonRepudiation, digitalSignature, keyEncipherment, keyAgreement]
+    keyUsage: [critical, clientAuth, nonRepudiation, digitalSignature, keyEncipherment, keyAgreement]
+  $default:
+    keyUsage: [critical, nonRepudiation, digitalSignature, keyEncipherment]
+certs:
+  etcd/$hosts:
+  - role: $inline
+    name: site
+  kube-apiserver/$hosts:
+  - role: server
 `,
 	} {
 		if code := CommandBatchCreateFromReader(env, bytes.NewReader([]byte(c))); code != 0 {
