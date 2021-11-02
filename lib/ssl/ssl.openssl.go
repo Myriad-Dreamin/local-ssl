@@ -130,6 +130,18 @@ func (env *OpenSSLEnv) WriteConf(confLoc string, callback func(f *os.File) error
 	}
 }
 
+func (env *OpenSSLEnv) Abs(str string) string {
+	if env.hasErr {
+		return ""
+	}
+	a, err := filepath.Abs(str)
+	if err != nil {
+		env.reportErr(err)
+		return ""
+	}
+	return a
+}
+
 func (env *OpenSSLEnv) WriteSSLConf(confLoc string, args *SSLTemplateArgs) {
 	env.WriteConf(confLoc, func(f *os.File) error {
 		return RenderSSLConf(f, args)
@@ -198,11 +210,26 @@ func (env *OpenSSLEnv) PushWd(wd string) {
 		return
 	}
 	env.wdStack = append(env.wdStack, a)
-	err = os.Chdir(a)
+	//err = os.Chdir(a)
+	//if err != nil {
+	//  env.reportErr(err)
+	//  return
+	//}
+}
+
+func (env *OpenSSLEnv) PopWd(wd string) {
+	a, err := filepath.Abs(wd)
 	if err != nil {
 		env.reportErr(err)
 		return
 	}
+	back := env.wdStack[len(env.wdStack)-1]
+	if back != a {
+		env.reportErr(fmt.Errorf("workdir stack broken: poping %s, wants %s", wd, a))
+		return
+	}
+
+	env.wdStack = env.wdStack[:len(env.wdStack)-1]
 }
 
 func (env *OpenSSLEnv) MakeDir(path string) {

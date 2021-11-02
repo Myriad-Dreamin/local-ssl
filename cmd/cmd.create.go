@@ -42,7 +42,7 @@ func CommandCreate(env *ssl.Env) int {
 
 	var (
 		join        = filepath.Join
-		proj        = *args.projectRoot
+		proj        = env.Abs(*args.projectRoot)
 		site        = *args.site
 		unit        = *args.unit
 		root        = "."
@@ -82,6 +82,7 @@ func CommandCreate(env *ssl.Env) int {
 	})
 	env.GenerateCSR(siteConfLoc, sitePriLoc, siteCSRLoc)
 	env.CreateSignedCrt(siteConfLoc, siteCSRLoc, siteCrtLoc, caCrtLoc, caPriLoc)
+	env.PopWd(proj)
 
 	if env.HasErr() {
 		return 1
