@@ -90,6 +90,15 @@ func CommandBatchCreateFromReader(env *ssl.Env, r io.Reader) int {
 
 func CommandBatchCreate(env *ssl.Env) int {
 	args := &commandBatchArgs
+	if len(*args.projectRoot) == 0 {
+		args.flagSet.Usage()
+		return 2
+	}
+	if len(*args.batchConfig) == 0 {
+		args.flagSet.Usage()
+		return 2
+	}
+
 	var (
 		batchConfig = *args.batchConfig
 		code        int
