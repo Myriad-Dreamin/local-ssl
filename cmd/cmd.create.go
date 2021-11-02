@@ -36,7 +36,9 @@ func CommandCreate(env *ssl.Env) int {
 		return 2
 	}
 
-	loadProjectConfig(*args.projectRoot)
+	if err := env.SwitchToProject(*args.projectRoot); err != nil {
+		panicHelper(err)
+	}
 
 	var (
 		join        = filepath.Join
@@ -61,7 +63,7 @@ func CommandCreate(env *ssl.Env) int {
 	}
 
 	if len(orgName) == 0 {
-		orgName = projectConfig.O
+		orgName = env.CaProjectConfig.O
 	}
 
 	env.PushWd(proj)
@@ -69,14 +71,14 @@ func CommandCreate(env *ssl.Env) int {
 	env.MakeDir(siteCerts)
 	env.GenerateRSAKey(sitePriLoc)
 	env.WriteSignSSLConf(siteConfLoc, &ssl.SignSSLTemplateArgs{
-		C:            projectConfig.C,
+		C:            env.CaProjectConfig.C,
 		O:            orgName,
-		ST:           projectConfig.ST,
-		L:            projectConfig.L,
+		ST:           env.CaProjectConfig.ST,
+		L:            env.CaProjectConfig.L,
 		OU:           fmt.Sprintf(`"%s"`, unit),
 		CN:           fmt.Sprintf(`"%s"`, site),
 		IP:           sanIP,
-		EmailAddress: projectConfig.EmailAddress,
+		EmailAddress: env.CaProjectConfig.EmailAddress,
 	})
 	env.GenerateCSR(siteConfLoc, sitePriLoc, siteCSRLoc)
 	env.CreateSignedCrt(siteConfLoc, siteCSRLoc, siteCrtLoc, caCrtLoc, caPriLoc)

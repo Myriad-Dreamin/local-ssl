@@ -89,10 +89,15 @@ func CommandBatchCreateFromReader(env *ssl.Env, r io.Reader) int {
 }
 
 func CommandBatchCreate(env *ssl.Env) int {
+	args := &commandBatchArgs
 	var (
-		batchConfig = *commandBatchArgs.batchConfig
+		batchConfig = *args.batchConfig
 		code        int
 	)
+
+	if err := env.SwitchToProject(*args.projectRoot); err != nil {
+		panicHelper(err)
+	}
 
 	if batchConfig == "-" {
 		code = CommandBatchCreateFromReader(env, os.Stdin)

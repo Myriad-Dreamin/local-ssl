@@ -21,7 +21,9 @@ func CommandInit(env *ssl.Env) int {
 		return 2
 	}
 
-	loadProjectConfig(*args.projectRoot)
+	if err := env.SwitchToProject(*args.projectRoot); err != nil {
+		panicHelper(err)
+	}
 
 	var (
 		join     = filepath.Join
@@ -38,13 +40,13 @@ func CommandInit(env *ssl.Env) int {
 
 	env.MakeDir(root)
 	env.WriteSSLConf(confLoc, &ssl.SSLTemplateArgs{
-		C:            projectConfig.C,
-		O:            projectConfig.O,
-		ST:           projectConfig.ST,
-		L:            projectConfig.L,
-		OU:           projectConfig.CaOU,
-		CN:           projectConfig.CaCN,
-		EmailAddress: projectConfig.EmailAddress,
+		C:            env.CaProjectConfig.C,
+		O:            env.CaProjectConfig.O,
+		ST:           env.CaProjectConfig.ST,
+		L:            env.CaProjectConfig.L,
+		OU:           env.CaProjectConfig.CaOU,
+		CN:           env.CaProjectConfig.CaCN,
+		EmailAddress: env.CaProjectConfig.EmailAddress,
 	})
 
 	env.MakeDir(certs)
